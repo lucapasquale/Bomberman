@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public class MapDestroyer : MonoBehaviour {
+public class MapDestroyer : MonoBehaviour
+{
+    public const string CELL_EXPLODED_NOTIFICATION = "cell_exploded";
 
     #region Singleton
     public static MapDestroyer instance;
@@ -18,13 +20,23 @@ public class MapDestroyer : MonoBehaviour {
     public Tile wallTile;
 
     public GameObject explosionPrefab;
+    List<Bomb> explodingBombs = new List<Bomb>();
 
 
     public void Explode(Bomb bomb) {
+        if (explodingBombs.Contains(bomb)) {
+            return;
+        }
+
+        explodingBombs.Add(bomb);
+
         ExplodeDirection(bomb, Directions.Right);
         ExplodeDirection(bomb, Directions.Up);
         ExplodeDirection(bomb, Directions.Left);
         ExplodeDirection(bomb, Directions.Down);
+
+        explodingBombs.Remove(bomb);
+        Destroy(bomb.gameObject);
     }
 
 
@@ -53,5 +65,7 @@ public class MapDestroyer : MonoBehaviour {
         var cellCenterPos = tilemap.GetCellCenterWorld(cell);
         var explosion = Instantiate(explosionPrefab, cellCenterPos, Quaternion.identity);
         Destroy(explosion, 1f);
+
+        this.PostNotification(CELL_EXPLODED_NOTIFICATION, cell);
     }
 }
